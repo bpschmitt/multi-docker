@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t bpschmitt/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run bpschmitt/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t bpschmitt/multi-client ./client
+  - docker build -t bpschmitt/multi-nginx ./nginx
+  - docker build -t bpschmitt/multi-server ./server
+  - docker build -t bpschmitt/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push bpschmitt/multi-client
+  - docker push bpschmitt/multi-nginx
+  - docker push bpschmitt/multi-server
+  - docker push bpschmitt/multi-worker
